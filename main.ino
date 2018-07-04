@@ -17,7 +17,6 @@ void setup() {
     pinMode(LED_RED, OUTPUT); // indicator
     pinMode(GPIO_IN1, INPUT_PULLUP);
     pinMode(GPIO_OUT1, OUTPUT);
-    digitalWrite(GPIO_OUT1,LOW);
 }
 
 #define KEY_PRESSED_STATE (LOW)
@@ -25,7 +24,9 @@ uint8_t state;
 
 void loop() {
     Serial.println("loop()");
+    digitalToggle(GPIO_OUT1);
     state=digitalRead(GPIO_IN1);
+    digitalToggle(GPIO_OUT1);
     if (state == KEY_PRESSED_STATE) {
         ledToggle(LED_RED);
         Serial.println("\nkey pressed");
