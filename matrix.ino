@@ -16,13 +16,15 @@
    matrix segments: the keyboards has atleast 2 segments.
 */
 uint32_t pins_read [] = {
-                               GPIO(16), GPIO(15), GPIO( 7), GPIO(11),/*GPIO(31),*/
-    GPIO(2), GPIO(3), GPIO(4), GPIO( 5), GPIO(28), GPIO(29), GPIO(12),
+                              GPIO(16), GPIO(15),GPIO(07),GPIO(11),/*GPIO(31)*/
+ GPIO(02),GPIO(03),GPIO(04),/*GPIO(05)*/,GPIO(28),GPIO(29),GPIO(12),/*GPIO(13) is next segment*/
+                    /* Hole at pin 05 is blocked on the ATA connector */
 };
 
 uint32_t pins_write [] = { /* P31(VBAT ADC) is separator */
-/*GPIO(31),*/ GPIO(30), GPIO(27), GPIO(26), GPIO(25),
-    GPIO(13), GPIO(14), GPIO( 8), GPIO( 6), GPIO(20),
+  /*GPIO(31)*/GPIO(30), GPIO(27), GPIO(26),GPIO(25),
+    GPIO(13), GPIO(14),/*GPIO(8),GPIO(6),*/GPIO(20),
+                  /* 06 and 08 seem to be serial-only, not GPIO */
 };
 
 uint32_t pincount_read = uint32_t(sizeof(pins_read)/sizeof(pins_read[0]));
@@ -49,7 +51,7 @@ uint8_t state;
 void init_keymatrix()
 {
   // Writing pins in output mode, default is HIGH
-  uint32_t i = pincount_write; 
+  uint_fast32_t i = pincount_write; 
   do {
     pinMode(pins_write[--i], OUTPUT);
   } while(i);
@@ -62,7 +64,7 @@ void init_keymatrix()
 }
 
 /* Function to scan key matrix and return the keys pressed */
-uint8_t scankeys()
+uint8_t scankeys(void)
 {
   uint_fast32_t cnt = 0;
 
@@ -74,7 +76,7 @@ uint8_t scankeys()
     do {
       state=digitalRead(pins_read[--j]);
       if (state == KEY_PRESSED_STATE) {
-        Serial.print("("); Serial.print(i); Serial.print(","); Serial.print(j); Serial.println(")");
+        Serial.print("("); Serial.print(pins_write[i]); Serial.print(","); Serial.print(pins_read[j]); Serial.println(")");
         ++cnt;
       }
     }while(j);

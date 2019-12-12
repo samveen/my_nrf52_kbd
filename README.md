@@ -11,7 +11,7 @@ My own Keyboard on a Adafruit nRF52 Feather with Arduino (learner project for sa
 I am making an effort on my part to create my own BT keyboard because I
 am unhappy with the state of the keyboards I have:
 - New keyboard on every device
-- Stupid key layout on my favourite portable keyboard.
+- Stupid key layout on my favourite portable keyboard (an old Palm 3245WW)
 
 This repo contains the software flailings I do.
 
