@@ -11,6 +11,11 @@
 
 // Constants
 #define KEY_PRESSED_STATE (LOW)
+
+/* This is used internally, not sent to the HID stack.
+ * Maybe we can set this equal to HID_KEY_NONE, as the key matrix cannot
+ * generate HID_KEY_NONE, so any conditions on it will work fine
+ */
 #define HID_KEY_FN    0xEA
 
 /************* INFO SECTION BEGIN ******************/
@@ -36,17 +41,19 @@ BLEDis bledis;
 BLEHidAdafruit blehid;
 
 char* kbdName="3245WW+ via nRF52832";
-char* manufacturer("Samveen via Adafruit");
-
-uint32_t GPIO_IN1=GPIO(25);
-uint32_t GPIO_OUT1=GPIO(20);
+char* kbdManufacturer="Samveen via Adafruit";
 
 uint_fast8_t keycount=0;
 
 bool hasKeyPressed=false;
 
 /****** Key Matrix Section START ****/
-uint8_t state;
+uint8_t state_l;
+uint8_t state_r;
+
+/* Function key pins */
+uint32_t fn_pin_read = GPIO(28);
+uint32_t fn_write_pin= GPIO(30);
 
 /* Left READ pins */
 uint32_t pins_read_left[] = {GPIO(02),GPIO(03),GPIO(04),GPIO(05),GPIO(28)};
@@ -62,35 +69,49 @@ uint32_t pincount_write = uint32_t(sizeof(pins_write)/sizeof(pins_write[0]));
 
 /* KeyCode Mapping to keymatrix formed by pins_read X pins_write */
 /* Left half */
-uint8_t keys_left[][7] = {
-{ k(GRAVE) ,    k(1),   k(2),           k(3),       k(4),       k(5),   k(6)},
+uint8_t keys_left[2][5][7] = { {
+{ k(GRAVE),     k(1),   k(2),           k(3),       k(4),       k(5),   k(6)},
 { k(TAB),       k(Q),   k(W),           k(E),       k(R),       k(T),   k(Y)},
 { k(CAPS_LOCK), k(A),   k(S),           k(D),       k(F),       k(G),   k(H)},
 { k(SHIFT_LEFT),k(NONE),k(Z),           k(X),       k(C),       k(V),   k(B)},
 { k(NONE),      k(FN),  k(CONTROL_LEFT),k(ALT_LEFT),k(GUI_LEFT),k(NONE),k(SPACE)},
+    }, {
+{ k(ESCAPE), k(NONE), k(NONE), k(NONE), k(NONE), k(NONE), k(NONE)},
+{ k(NONE),   k(NONE), k(NONE), k(NONE), k(NONE), k(NONE), k(NONE)},
+{ k(NONE),   k(NONE), k(NONE), k(NONE), k(NONE), k(NONE), k(NONE)},
+{ k(NONE),   k(NONE), k(NONE), k(NONE), k(NONE), k(NONE), k(NONE)},
+{ k(NONE),   k(FN),   k(NONE), k(NONE), k(NONE), k(NONE), k(NONE)}
+    }
 };
 
 /* Right half */
-uint8_t keys_right[][7] = {
+uint8_t keys_right[2][5][7] = { {
 { k(7),    k(8),        k(9),     k(0),        k(MINUS),       k(EQUAL),        k(BACKSPACE)},
 { k(U),    k(I),        k(O),     k(P),        k(BRACKET_LEFT),k(BRACKET_RIGHT),k(BACKSLASH)},
 { k(J),    k(K),        k(L),     k(SEMICOLON),k(APOSTROPHE),  k(RETURN),       k(NONE)},
 { k(N),    k(M),        k(COMMA), k(PERIOD),   k(SLASH),       k(DELETE),       k(SHIFT_RIGHT)},
 { k(SPACE),k(ALT_RIGHT),k(ESCAPE),k(ARROW_UP), k(ARROW_LEFT),  k(ARROW_DOWN),   k(ARROW_RIGHT)}
+    }, {
+{ k(NONE), k(NONE), k(NONE), k(NONE),   k(NONE), k(NONE),     k(NONE)},
+{ k(NONE), k(NONE), k(NONE), k(NONE),   k(NONE), k(NONE),     k(NONE)},
+{ k(NONE), k(NONE), k(NONE), k(NONE),   k(NONE), k(NONE),     k(NONE)},
+{ k(NONE), k(NONE), k(NONE), k(NONE),   k(NONE), k(NONE),     k(NONE)},
+{ k(NONE), k(NONE), k(NONE), k(PAGE_UP),k(HOME), k(PAGE_DOWN),k(END)}
+    }
 };
 
 /* Cant do more than 10 fingers in a go, now, can you? */
 /* +2 for that lucky guy with 6 perfect digits */
 uint8_t keys[12];
 
-/* Modifier key flags or do I use a bitfield ? */
-bool fn=false;
-bool shift_l=false;
-bool shift_r=false;
-bool ctrl_l=false;
-bool ctrl_r=false;
-bool alt_l=false;
-bool alt_r=false;
+/* modifier flag mask for keyboard report */
+uint8_t modifiers;
+
+/* Function key flag */
+bool function_state=false;
+
+/*TODO: Function key action implementation */
+
 /****** Key Matrix Section END   ****/
 
 
@@ -135,9 +156,10 @@ void setup() {
     }while(i);
 
     /* Reading pins in INPUT mode with PULLUP */
-    i=pincount_read;
+    i=pincount_read_left;
     do {
-      pinMode(pins_read[--i], INPUT_PULLUP);
+      pinMode(pins_read_left[--i], INPUT_PULLUP);
+      pinMode(pins_read_right[i], INPUT_PULLUP);
     } while(i);
 
     Serial.println("main:setup()::end");
@@ -152,7 +174,20 @@ void loop() {
         delay(5);
     }
 
-    keycount= 0;
+    keycount=0;
+    modifiers=0;
+
+    /* Function key press check: Separate the check to make key checks easier */
+    digitalToggle(fn_write_pin); // Toggle to LOW
+    state_l=digitalRead(fn_pin_read);
+    digitalToggle(fn_write_pin); // Toggle back to HIGH
+    if (state_l == KEY_PRESSED_STATE) {
+        Serial.print("FN,");
+        Serial.print("(");Serial.print(fn_write_pin);Serial.print(",");Serial.print(fn_pin_read);Serial.print(")-> ");
+                Serial.println(k(FN),HEX);
+        function_state=1;
+    } else
+        function_state=0;
 
     /* Loop through write pins, setting them low, and scan read pins for LOW */
     uint_fast32_t i = pincount_write;
@@ -160,29 +195,57 @@ void loop() {
         digitalToggle(pins_write[--i]); // Toggle to LOW
         uint_fast32_t j = pincount_read_left;
         do {
-            state=digitalRead(pins_read_left[--j]);
-            if (state == KEY_PRESSED_STATE) {
-                keys[keycount++];
-                switch(keys_left_half[j][i]) {
-                  case k(FN):
-                      Serial.print("FN,");
-                      break;
-                  case k(SHIFT_LEFT):
-                      Serial.print("LShift,");
-                      break;
-                  case k(CONTROL_LEFT):
-                      Serial.print("LCtrl,");
-                      break;
-                  case k(ALT_LEFT):
-                      Serial.print("LAlt,");
-                      break;
-                  case k(GUI_LEFT):
-                      Serial.print("LGUI,");
-                      break;
+            state_l=digitalRead(pins_read_left[--j]);
+            state_r=digitalRead(pins_read_right[j]);
+            if (state_l == KEY_PRESSED_STATE) {
+                if (keys_left[function_state][j][i])
+                    keys[keycount++]=keys_left[function_state][j][i];
+                Serial.print("(");Serial.print(j);Serial.print(",");Serial.print(i);Serial.print(")-> ");
+                Serial.print("(");Serial.print(pins_write[j]);Serial.print(",");Serial.print(pins_read_left[i]);Serial.print(")-> ");
+                Serial.println(keys_left[function_state][j][i],HEX);
+                /* modifier flags check */
+                switch(keys_left[function_state][j][i]) {
+                    case k(SHIFT_LEFT):
+                        modifiers|=KEYBOARD_MODIFIER_LEFTSHIFT;
+                        Serial.print("LShift,");
+                        break;
+                    case k(CONTROL_LEFT):
+                        modifiers|=KEYBOARD_MODIFIER_LEFTCTRL;
+                        Serial.print("LCtrl,");
+                        break;
+                    case k(ALT_LEFT):
+                        modifiers|=KEYBOARD_MODIFIER_LEFTALT;
+                        Serial.print("LAlt,");
+                        break;
+                    case k(GUI_LEFT):
+                        modifiers|=KEYBOARD_MODIFIER_LEFTGUI;
+                        Serial.print("LGUI,");
+                        break;
                 }
-               Serial.print("(");Serial.print(j);Serial.print(",");Serial.print(i);Serial.print(")-> ");
-               Serial.print("(");Serial.print(pins_write[j]);Serial.print(",");Serial.print(pins_read[i]);Serial.print(")-> ");
-               Serial.println(keys_left_half[j][i],HEX);
+            }
+            if (state_r == KEY_PRESSED_STATE) {
+                keys[keycount++]=keys_right[function_state][j][i];
+                Serial.print("(");Serial.print(j);Serial.print(",");Serial.print(i);Serial.print(")-> ");
+                Serial.print("(");Serial.print(pins_write[j]);Serial.print(",");Serial.print(pins_read_right[i]);Serial.print(")-> ");
+                Serial.println(keys_right[function_state][j][i],HEX);
+                switch(keys_right[function_state][j][i]) {
+                    case k(CONTROL_RIGHT):
+                        modifiers|=KEYBOARD_MODIFIER_RIGHTCTRL;
+                        Serial.print("LCtrl,");
+                        break;
+                    case k(SHIFT_RIGHT):
+                        modifiers|=KEYBOARD_MODIFIER_RIGHTSHIFT;
+                        Serial.print("LShift,");
+                        break;
+                    case k(ALT_RIGHT):
+                        modifiers|=KEYBOARD_MODIFIER_RIGHTALT;
+                        Serial.print("LAlt,");
+                        break;
+                    case k(GUI_RIGHT):
+                        modifiers|=KEYBOARD_MODIFIER_RIGHTGUI;
+                        Serial.print("LGUI,");
+                        break;
+                }
             }
         } while(j); /* read_pins_left */
         digitalToggle(pins_write[i]); // Toggle back to HIGH
@@ -193,9 +256,24 @@ void loop() {
     if(keycount>0) { // Keypress LED
         hasKeyPressed = true;
         Serial.print("Keys pressed: "); Serial.println(keycount);
+
+        uint8_t keycode[6];
+        arrclr(keycode);
+
+        if (keycount<=6) {
+            memcpy(keycode,keys,keycount);
+            blehid.keyboardReport(modifiers, keycode);
+        } else {
+            memcpy(keycode,keys,6);
+            blehid.keyboardReport(modifiers, keycode);
+            arrclr(keycode);
+
+            memcpy(keycode,keys,keycount-6);
+            blehid.keyboardReport(modifiers, keycode);
+        }
     }
 
-    delay(50);
+    delay(100);
 }
 
 void startAdv(void)
@@ -281,4 +359,4 @@ void loop()
 }
 */
 
-// vim: nowrap ts=4 sw=4 et:
+// vim: nowrap ts=4 sw=4 et cin:
