@@ -12,6 +12,12 @@
 // Constants
 #define KEY_PRESSED_STATE (LOW)
 
+// Battery status
+#define VBAT_MV_PER_LSB   (0.73242188F)   // 3.0V ADC range and 12-bit ADC resolution = 3000mV/4096
+#define VBAT_DIVIDER      (0.71275837F)   // 2M + 0.806M voltage divider on VBAT = (2M / (0.806M + 2M))
+#define VBAT_DIVIDER_COMP (1.403F)        // Compensation factor for the VBAT divider
+#define REAL_VBAT_MV_PER_LSB (VBAT_DIVIDER_COMP * VBAT_MV_PER_LSB)
+
 /* This is used internally, not sent to the HID stack.
  * Maybe we can set this equal to HID_KEY_NONE, as the key matrix cannot
  * generate HID_KEY_NONE, so any conditions on it will work fine
@@ -35,6 +41,8 @@ uint32_t pins_write_on_board [] = { /* P31(VBAT ADC) is separator */
     GPIO(13), GPIO(14),/*GPIO(8),GPIO(6),*/GPIO(20),
                   /* 06 and 08 seem to be serial-only, not GPIO */
 };
+
+uint32_t vbat_pin = PIN_VBAT;
 /************* INFO SECTION END   ******************/
 
 BLEDis bledis;
@@ -114,6 +122,46 @@ bool function_state=false;
 
 /****** Key Matrix Section END   ****/
 
+/* Battery: BEGIN */
+uint8_t battery_check=100;
+
+uint8_t get_battery_voltage_percent(void) {
+    float raw;
+
+    // Set the analog reference to 3.0V (default = 3.6V)
+    analogReference(AR_INTERNAL_3_0);
+
+    // Set the resolution to 12-bit (0..4095)
+    analogReadResolution(12); // Can be 8, 10, 12 or 14
+
+    // Let the ADC settle
+    delay(1);
+
+    // Get the raw 12-bit, 0..3000mV ADC value
+    raw = analogRead(vbat_pin);
+
+    // Set the ADC back to the default settings
+    analogReference(AR_DEFAULT);
+    analogReadResolution(10);
+
+    // Convert the raw value to compensated mv, taking the resistor-
+    // divider into account (providing the actual LIPO voltage)
+    // ADC range is 0..3000mV and resolution is 12-bit (0..4095)
+    float vbat_mv = raw * REAL_VBAT_MV_PER_LSB;
+
+    // Convert from raw mv to percentage (based on LIPO chemistry)
+    if(vbat_mv<3300)
+        return 0;
+    else if(vbat_mv <3600) {
+        vbat_mv -= 3300;
+        return (uint8_t)(vbat_mv/30);
+    } else {
+        vbat_mv -= 3600;
+        return (uint8_t)(10 + (vbat_mv * 0.15F));  // thats vbat_mv /6.66666666
+    }
+}
+
+/* Battery: END */
 
 void setup() {
     Serial.begin(115200);
@@ -124,6 +172,10 @@ void setup() {
     Serial.println("main::setup()::start");
 
     pinMode(LED_RED, OUTPUT); // POWER indicator
+
+    Serial.println("main::setup()::Battery status");
+    // Get a single ADC sample and throw it away
+    get_battery_voltage_percent();
 
     Serial.println("main::setup()::BT");
 
@@ -172,6 +224,19 @@ void loop() {
         blehid.keyRelease();
 
         delay(5);
+    }
+
+    /* Battery check */
+    if(battery_check) {
+        --battery_check;
+    } else {
+        battery_check=100;
+
+        uint8_t vbat_per = get_battery_voltage_percent();
+
+        // Display the results
+        Serial.print("LIPO at "); Serial.print(vbat_per); Serial.println("%");
+        // TODO: Enable BT broadcast of battery status
     }
 
     keycount=0;
