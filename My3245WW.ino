@@ -48,7 +48,7 @@ uint32_t vbat_pin = PIN_VBAT;
 BLEDis bledis;
 BLEHidAdafruit blehid;
 
-char* kbdName="3245WW+ via nRF52832";
+char* kbdName="3245WW+nRF52832";
 char* kbdManufacturer="Samveen via Adafruit";
 
 uint_fast8_t keycount=0;
