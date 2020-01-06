@@ -46,6 +46,7 @@ uint32_t vbat_pin = PIN_VBAT;
 /************* INFO SECTION END   ******************/
 
 BLEDis bledis;
+BLEBas blebas;
 BLEHidAdafruit blehid;
 
 char* kbdName="3245WW+nRF52832";
@@ -173,10 +174,6 @@ void setup() {
 
     pinMode(LED_RED, OUTPUT); // POWER indicator
 
-    Serial.println("main::setup()::Battery status");
-    // Get a single ADC sample and throw it away
-    get_battery_voltage_percent();
-
     Serial.println("main::setup()::BT");
 
     // Setup BT
@@ -184,10 +181,19 @@ void setup() {
     Bluefruit.setTxPower(4);    // Check bluefruit.h for supported values
     Bluefruit.setName(kbdName);
 
+    Serial.println("main::setup()::BT::DIS");
     // Configure and Start Device Information Service
     bledis.setManufacturer(kbdManufacturer);
     bledis.setModel(kbdName);
     bledis.begin();
+
+    Serial.println("main::setup()::BT::BAS");
+    // Start BLE Battery Service
+    blebas.begin();
+
+    // publish battery status
+    uint8_t bat_percentage = get_battery_voltage_percent();
+    blebas.write(bat_percentage);
 
     // Start BLE HID
     blehid.begin();
@@ -232,11 +238,12 @@ void loop() {
     } else {
         battery_check=100;
 
-        uint8_t vbat_per = get_battery_voltage_percent();
+        uint8_t bat_percentage = get_battery_voltage_percent();
 
         // Display the results
-        Serial.print("LIPO at "); Serial.print(vbat_per); Serial.println("%");
-        // TODO: Enable BT broadcast of battery status
+        Serial.print("LIPO at "); Serial.print(bat_percentage); Serial.println("%");
+        // BT broadcast of battery status
+        blebas.notify(bat_percentage);
     }
 
     keycount=0;

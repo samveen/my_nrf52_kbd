@@ -8,4 +8,4 @@ Todo list for the Keyboard, now that it's in a workable state:
 6. Ability to store multiple BT credentials and switch between them.
 7. Implement some form of Poweroff
 8. Better function key handling, to include Keyboard meta-control
-9. Battery status update via BAS
+9. ~Battery status update via BAS~ Done
