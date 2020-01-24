@@ -240,10 +240,12 @@ void loop() {
 
         uint8_t bat_percentage = get_battery_voltage_percent();
 
-        // Display the results
-        Serial.print("LIPO at "); Serial.print(bat_percentage); Serial.println("%");
-        // BT broadcast of battery status
-        blebas.notify(bat_percentage);
+        if(0<=bat_percentage && bat_percentage<=100) { // Only on valid percentage
+            // Display the results
+            Serial.print("LIPO at "); Serial.print(bat_percentage); Serial.println("%");
+            // BT broadcast of battery status
+            blebas.notify(bat_percentage);
+        }
     }
 
     keycount=0;
