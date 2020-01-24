@@ -79,27 +79,27 @@ uint32_t pincount_write = uint32_t(sizeof(pins_write)/sizeof(pins_write[0]));
 /* KeyCode Mapping to keymatrix formed by pins_read X pins_write */
 /* Left half */
 uint8_t keys_left[2][5][7] = { {
-{ k(GRAVE),     k(1),   k(2),           k(3),       k(4),       k(5),   k(6)},
-{ k(TAB),       k(Q),   k(W),           k(E),       k(R),       k(T),   k(Y)},
-{ k(CAPS_LOCK), k(A),   k(S),           k(D),       k(F),       k(G),   k(H)},
-{ k(SHIFT_LEFT),k(NONE),k(Z),           k(X),       k(C),       k(V),   k(B)},
-{ k(NONE),      k(FN),  k(CONTROL_LEFT),k(ALT_LEFT),k(GUI_LEFT),k(NONE),k(SPACE)},
+{ k(GRAVE),       k(1),       k(2),       k(3),   k(4),    k(5),   k(6)},
+{ k(TAB),         k(Q),       k(W),       k(E),   k(R),    k(T),   k(Y)},
+{ k(CAPS_LOCK),   k(A),       k(S),       k(D),   k(F),    k(G),   k(H)},
+{ k(SHIFT_LEFT),  k(Z),       k(X),       k(C),   k(V),    k(B),   k(NONE)},
+{ k(CONTROL_LEFT),k(ALT_LEFT),k(GUI_LEFT),k(NONE),k(SPACE),k(NONE),k(FN)},
     }, {
 { k(ESCAPE), k(NONE), k(NONE), k(NONE), k(NONE), k(NONE), k(NONE)},
 { k(NONE),   k(NONE), k(NONE), k(NONE), k(NONE), k(NONE), k(NONE)},
 { k(NONE),   k(NONE), k(NONE), k(NONE), k(NONE), k(NONE), k(NONE)},
 { k(NONE),   k(NONE), k(NONE), k(NONE), k(NONE), k(NONE), k(NONE)},
-{ k(NONE),   k(FN),   k(NONE), k(NONE), k(NONE), k(NONE), k(NONE)}
+{ k(NONE),   k(NONE), k(NONE), k(NONE), k(NONE), k(NONE), k(FN)},
     }
 };
 
 /* Right half */
 uint8_t keys_right[2][5][7] = { {
-{ k(7),    k(8),        k(9),     k(0),        k(MINUS),       k(EQUAL),        k(BACKSPACE)},
-{ k(U),    k(I),        k(O),     k(P),        k(BRACKET_LEFT),k(BRACKET_RIGHT),k(BACKSLASH)},
-{ k(J),    k(K),        k(L),     k(SEMICOLON),k(APOSTROPHE),  k(RETURN),       k(NONE)},
-{ k(N),    k(M),        k(COMMA), k(PERIOD),   k(SLASH),       k(DELETE),       k(SHIFT_RIGHT)},
-{ k(SPACE),k(ALT_RIGHT),k(ESCAPE),k(ARROW_UP), k(ARROW_LEFT),  k(ARROW_DOWN),   k(ARROW_RIGHT)}
+{ k(7),    k(8),        k(9),     k(0),         k(MINUS),       k(EQUAL),        k(BACKSPACE)},
+{ k(U),    k(I),        k(O),     k(P),         k(BRACKET_LEFT),k(BRACKET_RIGHT),k(BACKSLASH)},
+{ k(J),    k(K),        k(L),     k(SEMICOLON), k(APOSTROPHE),  k(RETURN),       k(NONE)},
+{ k(N),    k(M),        k(COMMA), k(PERIOD),    k(SLASH),       k(DELETE),       k(SHIFT_RIGHT)},
+{ k(SPACE),k(ALT_RIGHT),k(ESCAPE),k(ARROW_LEFT),k(ARROW_DOWN),  k(ARROW_UP),     k(ARROW_RIGHT)}
     }, {
 { k(NONE), k(NONE), k(NONE), k(NONE),   k(NONE), k(NONE),     k(NONE)},
 { k(NONE), k(NONE), k(NONE), k(NONE),   k(NONE), k(NONE),     k(NONE)},
