@@ -61,11 +61,11 @@ uint8_t state_l;
 uint8_t state_r;
 
 /* Function key pins */
-uint32_t fn_pin_read = GPIO(28);
-uint32_t fn_write_pin= GPIO(30);
+uint32_t fn_pin_read = GPIO(15);
+uint32_t fn_write_pin= GPIO(26);
 
 /* Left READ pins */
-uint32_t pins_read_left[] = {GPIO(02),GPIO(03),GPIO(04),GPIO(05),GPIO(28)};
+uint32_t pins_read_left[] = {GPIO(28),GPIO(05),GPIO(04),GPIO(03),GPIO(02)};
 uint32_t pincount_read_left = uint32_t(sizeof(pins_read_left)/sizeof(pins_read_left[0]));
 
 /* Right READ pins */
@@ -73,7 +73,7 @@ uint32_t pins_read_right[] = {GPIO(16),GPIO(15),GPIO(07),GPIO(11),GPIO(12)};
 uint32_t pincount_read_right = uint32_t(sizeof(pins_read_right)/sizeof(pins_read_right[0]));
 
 /* Common WRITE pins */
-uint32_t pins_write[] = {GPIO(13),GPIO(30),GPIO(20),GPIO(27),GPIO(25),GPIO(26),GPIO(14)};
+uint32_t pins_write[] = {GPIO(13),GPIO(14),GPIO(30),GPIO(27),GPIO(26),GPIO(25),GPIO(20)};
 uint32_t pincount_write = uint32_t(sizeof(pins_write)/sizeof(pins_write[0]));
 
 /* KeyCode Mapping to keymatrix formed by pins_read X pins_write */
