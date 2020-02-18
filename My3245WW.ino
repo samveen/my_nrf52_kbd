@@ -359,6 +359,8 @@ void startAdv(void)
     Bluefruit.Advertising.addAppearance(BLE_APPEARANCE_HID_KEYBOARD);
 
     // Include BLE HID service
+    Bluefruit.Advertising.addService(bledis);
+    Bluefruit.Advertising.addService(blebas);
     Bluefruit.Advertising.addService(blehid);
 
     // There is enough room for the dev name in the advertising packet
