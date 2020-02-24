@@ -98,7 +98,7 @@ uint8_t keys_left[2][5][7] = { {
 uint8_t keys_right[2][5][7] = { {
 { k(7),    k(8),        k(9),     k(0),         k(MINUS),       k(EQUAL),        k(BACKSPACE)},
 { k(U),    k(I),        k(O),     k(P),         k(BRACKET_LEFT),k(BRACKET_RIGHT),k(BACKSLASH)},
-{ k(J),    k(K),        k(L),     k(SEMICOLON), k(APOSTROPHE),  k(RETURN),       k(NONE)},
+{ k(J),    k(K),        k(L),     k(SEMICOLON), k(APOSTROPHE),  k(NONE),         k(RETURN)},
 { k(N),    k(M),        k(COMMA), k(PERIOD),    k(SLASH),       k(DELETE),       k(SHIFT_RIGHT)},
 { k(SPACE),k(ALT_RIGHT),k(ESCAPE),k(ARROW_LEFT),k(ARROW_DOWN),  k(ARROW_UP),     k(ARROW_RIGHT)}
     }, {
