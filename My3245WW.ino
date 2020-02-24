@@ -4,6 +4,7 @@
  See NOTICE file for details.
 *********************************************************************/
 #include <bluefruit.h>
+#include "BLEHidKbd.h"
 
 // Macros
 #define GPIO(x) (x)
@@ -47,7 +48,7 @@ uint32_t vbat_pin = PIN_VBAT;
 
 BLEDis bledis;
 BLEBas blebas;
-BLEHidAdafruit blehid;
+BLEHidKbd blehid;
 
 char kbdName[]="3245WW+nRF52832";
 char kbdManufacturer[]="Samveen via Adafruit";
@@ -196,6 +197,7 @@ void setup() {
     blebas.write(bat_percentage);
 
     // Start BLE HID
+    blehid.enableMouse(false);
     blehid.begin();
 
     // Set callback for set LED from central
