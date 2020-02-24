@@ -49,8 +49,8 @@ BLEDis bledis;
 BLEBas blebas;
 BLEHidAdafruit blehid;
 
-char* kbdName="3245WW+nRF52832";
-char* kbdManufacturer="Samveen via Adafruit";
+char kbdName[]="3245WW+nRF52832";
+char kbdManufacturer[]="Samveen via Adafruit";
 
 uint_fast8_t keycount=0;
 
@@ -240,7 +240,7 @@ void loop() {
 
         uint8_t bat_percentage = get_battery_voltage_percent();
 
-        if(0<=bat_percentage && bat_percentage<=100) { // Only on valid percentage
+        if(bat_percentage<=100) { // Only on valid percentage
             // Display the results
             Serial.print("LIPO at "); Serial.print(bat_percentage); Serial.println("%");
             // BT broadcast of battery status
@@ -395,7 +395,7 @@ void set_keyboard_led(uint16_t conn_handle, uint8_t led_bitmap)
   (void) conn_handle;
 
   // light up Red Led if any bits is set
-  if (led_bitmap && KEYBOARD_LED_CAPSLOCK)
+  if (led_bitmap & KEYBOARD_LED_CAPSLOCK)
   {
     ledOn( LED_RED );
   }
